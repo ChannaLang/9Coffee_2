@@ -70,7 +70,7 @@
                 <li>
         <a href="{{ route('admin.raw-material.stock') }}">
             <span class="icon"><ion-icon name="cube-outline"></ion-icon></span>
-            <span class="title">Stock</span>
+            <span class="title">Raw material</span>
         </a>
     </li>
                 <li>

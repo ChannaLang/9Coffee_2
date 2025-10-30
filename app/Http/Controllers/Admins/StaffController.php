@@ -29,15 +29,9 @@ public function StaffSellProduct(Request $request)
 
     $product = Product::find($request->product_id);
 
-    // Check if enough stock
-    if ($product->quantity < $request->quantity) {
-        return redirect()->back()->with('error', 'Not enough stock!');
-    }
-
     $totalPrice = $product->price * $request->quantity;
 
-
-    $order = Order::create([
+    Order::create([
         'product_id' => $product->id,
         'price' => $totalPrice,
         'payment_status' => $request->payment_status ?? 'Due',
@@ -48,18 +42,19 @@ public function StaffSellProduct(Request $request)
         'user_id' => Auth::id(),
     ]);
 
-    // Deduct sold quantity from product stock
-    $product->quantity -= $request->quantity;
-    $product->save();
-
     return redirect()->route('staff.sell.form')->with(['success' => 'Product sold successfully!']);
 }
+
+
+
+
+
 
 public function staffCheckout(Request $request)
 {
     $cart = json_decode($request->cart_data, true);
     $paymentMethod = $request->payment_method;
-    $orderRef = 'ORD-' . now()->format('YmdHis') . '-' . rand(1000,9999);
+    $orderRef = 'ORD-' . now()->format('YmdHis') . '-' . rand(1000, 9999);
 
     $ordersCreated = [];
 
@@ -72,16 +67,19 @@ public function staffCheckout(Request $request)
         $product = Product::with('rawMaterials')->find($productId);
         if (!$product) continue;
 
-        $canFulfill = true;
+        // ✅ Check raw material availability
         foreach ($product->rawMaterials as $raw) {
             $requiredQty = $raw->pivot->quantity_required * $item['quantity'];
+
             if ($raw->quantity < $requiredQty) {
-                $canFulfill = false;
-                break;
+                return response()->json([
+                    'success' => false,
+                    'message' => "Not enough {$raw->name} in stock!"
+                ]);
             }
         }
-        if (!$canFulfill) continue;
 
+        // ✅ Create order
         $order = Order::create([
             'product_id' => $productId,
             'price' => $item['price'] * $item['quantity'],
@@ -101,8 +99,7 @@ public function staffCheckout(Request $request)
             'order_ref' => $orderRef,
         ]);
 
-        $product->decrement('quantity', $item['quantity']);
-
+        // ✅ Deduct raw material
         foreach ($product->rawMaterials as $raw) {
             $requiredQty = $raw->pivot->quantity_required * $item['quantity'];
             $raw->decrement('quantity', $requiredQty);
@@ -110,14 +107,11 @@ public function staffCheckout(Request $request)
 
         $ordersCreated[] = $order;
     }
-    foreach ($product->rawMaterials as $raw) {
-    $requiredQty = $raw->pivot->quantity_required * $item['quantity'];
-    Log::info("Deducting {$requiredQty} from {$raw->name} (before: {$raw->quantity})");
-    $raw->decrement('quantity', $requiredQty);
-}
 
+    // ❌ REMOVE THIS — it was double-deducting
+    // foreach (...) { ... }
 
-    // Return updated raw material stock
+    // ✅ return updated stock
     $updatedRawMaterials = RawMaterial::all()->map(function($raw){
         return [
             'id' => $raw->id,
@@ -134,4 +128,5 @@ public function staffCheckout(Request $request)
         'updated_raw_materials' => $updatedRawMaterials,
     ]);
 }
+
 }

@@ -86,12 +86,46 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::get('/help', [AdminsController::class, 'Help'])->name('admins.help');
 
 
-// Raw Material Stock
-    Route::get('/admin/stock', [RawMaterialController::class, 'viewStock'])->name('admin.stock');
-    Route::post('/admin/stock/{id}', [RawMaterialController::class, 'updateStock'])->name('admin.stock.update');
-    Route::get('admin/stock', [RawMaterialController::class, 'viewRawMaterials'])
-     ->name('admin.raw-material.stock');
-    Route::patch('raw-stock/update/{id}', [RawMaterialController::class, 'update'])->name('admin.raw-material.update');
+
+    // Show all raw materials
+    Route::get('/admin/stock', [RawMaterialController::class, 'viewRawMaterials'])
+        ->name('admin.raw-material.stock');
+
+    // Update raw material quantity
+    Route::patch('/admin/stock/{id}', [RawMaterialController::class, 'updateRawMaterial'])
+        ->name('admin.raw-material.update');
+
+    // Show form to create a new raw material
+    Route::get('/admin/raw-material/create', [RawMaterialController::class, 'create'])
+        ->name('admin.raw-material.create');
+
+    // Store a new raw material
+    Route::post('/admin/raw-material/store', [RawMaterialController::class, 'store'])
+        ->name('admin.raw-material.store');
+
+    Route::delete('/admin/raw-material/{id}', [App\Http\Controllers\Admins\RawMaterialController::class, 'destroy'])
+    ->name('admin.raw-material.destroy');
+
+    Route::post('/admin/product/{product}/materials', [ProductController::class, 'addMaterials'])
+     ->name('admin.product.addMaterials');
+
+
+    Route::get('/admin/product/{product}/assign-materials', [ProductController::class, 'assignMaterials'])
+        ->name('admin.product.assignMaterials');
+
+    Route::post('/admin/product/{product}/add-materials', [ProductController::class, 'addMaterials'])
+        ->name('admin.product.addMaterials');
+
+
+// Show assign materials form
+Route::get('/admin/product/{id}/assign-materials', [ProductController::class, 'assignMaterials'])
+    ->name('admin.product.assignMaterials');
+
+// Save assigned materials
+Route::post('/admin/product/{id}/add-materials', [ProductController::class, 'addMaterials'])
+    ->name('admin.product.addMaterials');
+
+
 
     // Admin Reports & Analytics
     Route::get('admin/reports/sales', [ReportController::class, 'salesReport'])->name('admin.sales.report');

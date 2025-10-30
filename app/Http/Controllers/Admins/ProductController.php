@@ -38,9 +38,13 @@ class ProductController extends Controller
         'description' => 'nullable',
     ]);
 
-    $descriptionPath = 'assets/images/';
-    $myimage = $request->image->getClientOriginalName();
-    $request->image->move(public_path($descriptionPath), $myimage);
+    $descriptionPath = public_path('assets/images');
+
+            if (!file_exists($descriptionPath)) {
+        mkdir($descriptionPath, 0775, true);}
+    $myimage = time() . '_' . $request->image->getClientOriginalName();
+    $request->image->move($descriptionPath, $myimage);
+
 
     Product::create([
         'name' => $request->name,
@@ -99,5 +103,30 @@ class ProductController extends Controller
 
     return response()->json(['success' => true, 'message' => 'Product updated successfully']);
 }
+public function addMaterials(Request $request, Product $product)
+{
+    $data = $request->validate([
+        'materials' => 'required|array',
+        'materials.*' => 'numeric|min:0',
+    ]);
+
+    // Sync the pivot table
+    $syncData = [];
+    foreach ($data['materials'] as $rawId => $qty) {
+        if ($qty > 0) {
+            $syncData[$rawId] = ['quantity_required' => $qty];
+        }
+    }
+
+    $product->rawMaterials()->sync($syncData);
+
+    return redirect()->back()->with('success', 'Recipe updated successfully!');
+}
+public function assignMaterials(Product $product)
+{
+    $rawMaterials = \App\Models\RawMaterial::all(); // fetch all raw materials
+    return view('admins.assign_materials', compact('product', 'rawMaterials'));
+}
+
 
 }

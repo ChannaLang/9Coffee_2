@@ -15,7 +15,7 @@ return new class extends Migration
     $table->id();
     $table->foreignId('product_id')->constrained()->onDelete('cascade');
     $table->foreignId('raw_material_id')->constrained()->onDelete('cascade');
-    $table->integer('quantity_required'); // How much of this material per product
+    $table->decimal('quantity_required', 8, 2); // ✅ allows decimals like 0.5
     $table->timestamps();
 });
 

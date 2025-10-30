@@ -17,7 +17,7 @@ class Product extends Model
     "price",
     "description",
     "type",
-    "quantity", // <- add this
+    //"quantity", // <- add this
 ];
 
      // Relationship to raw materials

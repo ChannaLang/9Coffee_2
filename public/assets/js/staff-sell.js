@@ -1,18 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     let cart = {};
 
-    // Toast helper
+        // Toast helper
     function showToast(message, icon='success'){
         Swal.fire({
-            toast:true,
-            position:'top-end',
-            icon,
+            toast: icon === 'success',       // only success uses small toast style
+            position: 'top-end',
+            icon: icon,
             title: message,
-            showConfirmButton:false,
-            timer:1500,
-            timerProgressBar:true
+            showConfirmButton: icon !== 'success',  // errors need button
+            timer: icon === 'success' ? 1500 : undefined, // only auto-close success
+            timerProgressBar: icon === 'success' ? true : false
         });
     }
+
 
     // Select size/sugar
     document.querySelectorAll('.size-buttons, .sugar-buttons').forEach(group=>{

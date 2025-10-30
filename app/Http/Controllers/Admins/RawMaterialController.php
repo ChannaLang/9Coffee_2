@@ -10,6 +10,58 @@ use App\Models\Product\Order;
 
 class RawMaterialController extends Controller
 {
+    // Show the form to create a new raw material
+    public function create()
+    {
+        return view('admins.create_raw_material'); // create this Blade view
+    }
+
+    // Store the new raw material in the database
+        public function store(Request $request)
+{
+    $request->validate([
+        'name' => 'required|max:100|unique:raw_materials,name',
+        'quantity' => 'required|numeric|min:0',
+        'unit' => 'required|string|max:10',
+    ]);
+
+    // Convert to base units
+    $quantity = $request->quantity;
+    $unit     = $request->unit;
+
+    switch ($unit) {
+        case 'kg':
+            $quantity = $quantity * 1000;
+            $unit = 'g';
+            break;
+
+        case 'g':
+            $unit = 'g';
+            break;
+
+        case 'l':
+            $quantity = $quantity * 1000;
+            $unit = 'ml';
+            break;
+
+        case 'ml':
+            $unit = 'ml';
+            break;
+
+        default:
+            $unit = 'pcs';
+    }
+
+    RawMaterial::create([
+        'name' => $request->name,
+        'quantity' => $quantity, // ✅ use converted
+        'unit' => $unit,         // ✅ use converted
+    ]);
+
+    return redirect()->route('admin.raw-material.stock')->with('success', 'Raw material added successfully!');
+}
+
+
     // Show all raw materials
     public function index()
     {
@@ -21,7 +73,7 @@ class RawMaterialController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'quantity' => 'required|integer|min:0',
+           'quantity' => 'required|numeric|min:0',
         ]);
 
         $material = RawMaterial::findOrFail($id);
@@ -80,4 +132,18 @@ public function updateRawMaterial(Request $request, $id)
 
     return redirect()->route('admin.raw-material.stock')->with('success', 'Stock updated successfully!');
 }
+public function destroy($id)
+{
+    $material = RawMaterial::findOrFail($id);
+
+    if ($material->quantity > 0) {
+        return redirect()->back()->with('delete', 'Cannot delete a material that still has stock!');
+    }
+
+    $material->delete();
+
+    return redirect()->back()->with('success', 'Material deleted successfully!');
+}
+
+
 }

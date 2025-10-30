@@ -83,6 +83,13 @@
                                         Delete
                                     </button>
                                 </td>
+                                <td>
+                                    <a href="{{ route('admin.product.assignMaterials', $product->id) }}"
+                                    class="btn btn-primary btn-sm rounded-pill">
+                                        Assign Materials
+                                    </a>
+                                </td>
+
                             </tr>
                             @php $counter++; @endphp
                             @endforeach
