@@ -25,31 +25,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add to cart
-    document.querySelectorAll('.btn-add-to-cart').forEach(btn=>{
-        btn.addEventListener('click', function(){
-            const card = this.closest('.product-card');
-            const id = card.dataset.id;
-            const name = card.dataset.name;
-            const price = parseFloat(card.dataset.price);
+document.querySelectorAll('.btn-add-to-cart').forEach(btn=>{
+    btn.addEventListener('click', function(){
+        const card = this.closest('.product-card');
+        const id = card.dataset.id;
+        const name = card.dataset.name;
+        const basePrice = parseFloat(card.dataset.price);
 
-            const sizeBtn = card.querySelector('.size-btn.active');
-            const sugarBtn = card.querySelector('.sugar-btn.active');
-            if(!sizeBtn || !sugarBtn){
-                showToast('Please select size and sugar level!', 'error');
-                return;
-            }
+        const sizeBtn = card.querySelector('.size-btn.active');
+        const sugarBtn = card.querySelector('.sugar-btn.active');
+        if(!sizeBtn || !sugarBtn){
+            showToast('Please select size and sugar level!', 'error');
+            return;
+        }
 
-            const size = sizeBtn.dataset.size;
-            const sugar = sugarBtn.dataset.sugar;
-            const key = `${id}_${size}_${sugar}`;
+        const size = sizeBtn.dataset.size;
+        const sugar = sugarBtn.dataset.sugar;
 
-            if(cart[key]) cart[key].quantity++;
-            else cart[key] = {id, name, size, sugar, price, quantity:1};
+        let price = basePrice;
+        if(size === 'M') price = basePrice * 0.85;
+        else if(size === 'S') price = basePrice * 0.80;
 
-            renderCart();
-            showToast(`${name} (${size}, ${sugar}%) added!`);
-        });
+        const key = `${id}_${size}_${sugar}`;
+        if(cart[key]) cart[key].quantity++;
+        else cart[key] = {id, name, size, sugar, price, quantity:1};
+
+        renderCart();
+        showToast(`${name} (${size}, ${sugar}%) added!`);
     });
+});
+
 
     // Remove from cart
     document.querySelectorAll('.btn-remove-from-cart').forEach(btn=>{
