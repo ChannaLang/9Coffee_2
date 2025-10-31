@@ -4,13 +4,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Toast helper
     function showToast(message, icon='success'){
         Swal.fire({
-            toast: icon === 'success',       // only success uses small toast style
-            position: 'top-end',
-            icon: icon,
+            position: 'center',
+            icon,
             title: message,
-            showConfirmButton: icon !== 'success',  // errors need button
-            timer: icon === 'success' ? 1500 : undefined, // only auto-close success
-            timerProgressBar: icon === 'success' ? true : false
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
         });
     }
 
@@ -88,59 +87,112 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Checkout button
-    document.querySelector('#checkout').addEventListener('click', function(e){
-        e.preventDefault();
+document.querySelector('#checkout').addEventListener('click', function(e){
+    e.preventDefault();
+    if(Object.keys(cart).length===0){
+        showToast('Cart is empty!', 'error');
+        return;
+    }
 
-        if(Object.keys(cart).length===0){
-            showToast('Cart is empty!', 'error');
-            return;
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+    const formData = new FormData();
+    formData.append('cart_data', JSON.stringify(cart));
+    formData.append('payment_method', 'cash'); // focus only on cash
+    formData.append('_token', csrfToken);
+
+    fetch(document.querySelector('#checkout-form').action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            // ✅ Backend confirmed, stock deducted
+            showToast(data.message, 'success');
+
+            // ✅ Show invoice
+            showInvoice(cart, 'cash');
+
+            cart = {};
+            renderCart();
+        } else {
+            showToast(data.message || 'Error occurred', 'error');
         }
+    })
+    .catch(err=>{
+        console.error(err);
+        showToast('Server error!', 'error');
+    });
+});
 
-        let total = Object.values(cart).reduce((sum, item)=> sum + item.price*item.quantity, 0);
+        // --- Invoice Popup ---
+    function showInvoice(cartData, paymentMethod){
+        let invoiceHTML = `
+            <div id="invoice" style="text-align:left;font-family:Arial, sans-serif;">
+                <h3 style="text-align:center;">☕ Coffee POS Invoice</h3>
+                <p style="text-align:center;font-size:13px;">Payment Method: <b>${paymentMethod.toUpperCase()}</b></p>
+                <hr>
+                <table style="width:100%;font-size:14px;">
+                    <thead>
+                        <tr>
+                            <th align="left">Item</th>
+                            <th>Size</th>
+                            <th>Sugar</th>
+                            <th>Qty</th>
+                            <th align="right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        let total = 0;
+        Object.values(cartData).forEach(item=>{
+            const lineTotal = item.price * item.quantity;
+            total += lineTotal;
+            invoiceHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.size}</td>
+                    <td>${item.sugar}%</td>
+                    <td>${item.quantity}</td>
+                    <td align="right">$${lineTotal.toFixed(2)}</td>
+                </tr>`;
+        });
+
+        invoiceHTML += `
+                    </tbody>
+                </table>
+                <hr>
+                <p style="text-align:right;font-weight:bold;">Total: $${total.toFixed(2)}</p>
+                <p style="text-align:center;font-size:12px;">Thank you for your purchase! ☕</p>
+                <p style="text-align:center;font-size:11px;color:gray;">Printed on ${new Date().toLocaleString()}</p>
+            </div>`;
 
         Swal.fire({
-            title:'Confirm Checkout',
-            html:`<p>Total: <strong>$${total.toFixed(2)}</strong></p>`,
-            icon:'question',
-            showCancelButton:true,
-            confirmButtonText:'Confirm'
+            title: 'Payment Successful!',
+            html: invoiceHTML,
+            icon: 'success',
+            width: 600,
+            confirmButtonText: 'Print Invoice',
+            didOpen: () => {
+                const popup = Swal.getPopup();
+                popup.style.textAlign = 'left';
+            }
         }).then(result=>{
             if(result.isConfirmed){
-                const csrfToken = document.querySelector('input[name="_token"]').value;
-                const formData = new FormData();
-                formData.append('cart_data', JSON.stringify(cart));
-                formData.append('payment_method', document.querySelector('#payment_method').value);
-                formData.append('_token', csrfToken);
-
-                fetch(document.querySelector('#checkout-form').action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                })
-                .then(async res => {
-                    const text = await res.text();
-                    try {
-                        const data = JSON.parse(text);
-                        if(data.success){
-                            showToast(data.message, 'success');
-                            cart = {};
-                            renderCart();
-                        } else {
-                            showToast(data.message || 'Error occurred', 'error');
-                        }
-                    } catch(e) {
-                        console.error('Server Response:', text);
-                        showToast('Server error!', 'error');
-                    }
-                })
-                .catch(err=>{
-                    console.error('Checkout failed:', err);
-                    showToast('Server error!', 'error');
-                });
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html><head><title>Invoice</title></head><body>
+                    ${invoiceHTML}
+                    <script>window.onload = function(){ window.print(); }</script>
+                    </body></html>
+                `);
+                printWindow.document.close();
             }
         });
-    });
+    }
+
 });

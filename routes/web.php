@@ -173,5 +173,7 @@ Route::post('/admin/product/{id}/add-materials', [ProductController::class, 'add
     Route::post('/staff-sell', [StaffController::class, 'StaffSellProduct'])->name('staff.sell');
     Route::post('/staff-checkout', [StaffController::class, 'staffCheckout'])->name('staff.checkout');
     Route::get('/staff-checkout', [StaffController::class, 'staffCheckout'])->name('staff.checkout');
+
+    
 });
 
