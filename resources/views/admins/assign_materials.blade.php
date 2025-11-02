@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+{{-- @extends('layouts.admin')
 
 @section('content')
 <h5>Assign Raw Materials to Product: {{ $product->name }}</h5>
@@ -32,4 +32,4 @@
 <a href="{{ route('admins.dashboard') }}" class="btn btn-light mt-3" style="color:#3e2f2f;">
     <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
 </a>
-@endsection
+@endsection --}}

@@ -15,41 +15,45 @@ class RawMaterialController extends Controller
     {
         return view('admins.create_raw_material'); // create this Blade view
     }
+    public function list() {
+        return response()->json(RawMaterial::all(['id','name','quantity','unit']));
+    }
+
 
     // Store the new raw material in the database
-        public function store(Request $request)
+    public function store(Request $request)
 {
-    $request->validate([
-        'name' => 'required|max:100|unique:raw_materials,name',
-        'quantity' => 'required|numeric|min:0',
-        'unit' => 'required|string|max:10',
-    ]);
+        $request->validate([
+            'name' => 'required|max:100|unique:raw_materials,name',
+            'quantity' => 'required|numeric|min:0',
+            'unit' => 'required|string|max:10',
+        ]);
 
-    // Convert to base units
-    $quantity = $request->quantity;
-    $unit     = $request->unit;
+        // Convert to base units
+        $quantity = $request->quantity;
+        $unit     = $request->unit;
 
-    switch ($unit) {
-        case 'kg':
-            $quantity = $quantity * 1000;
-            $unit = 'g';
-            break;
+        switch ($unit) {
+            case 'kg':
+                $quantity = $quantity * 1000;
+                $unit = 'g';
+                break;
 
-        case 'g':
-            $unit = 'g';
-            break;
+            case 'g':
+                $unit = 'g';
+                break;
 
-        case 'l':
-            $quantity = $quantity * 1000;
-            $unit = 'ml';
-            break;
+            case 'l':
+                $quantity = $quantity * 1000;
+                $unit = 'ml';
+                break;
 
-        case 'ml':
-            $unit = 'ml';
-            break;
+            case 'ml':
+                $unit = 'ml';
+                break;
 
-        default:
-            $unit = 'pcs';
+            default:
+                $unit = 'pcs';
     }
 
     RawMaterial::create([
@@ -113,8 +117,9 @@ class RawMaterialController extends Controller
 // Show raw material stock
 public function viewRawMaterials()
 {
-    $rawMaterials = \App\Models\RawMaterial::orderBy('id', 'asc')->get();
-    return view('admins.stock', compact('rawMaterials'));
+    $rawMaterials = RawMaterial::orderBy('id', 'asc')->get();
+    $totalStock = $rawMaterials->sum('quantity'); // total available stock
+    return view('admins.stock', compact('rawMaterials', 'totalStock'));
 }
 
 

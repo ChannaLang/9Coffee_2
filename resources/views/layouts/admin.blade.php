@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta charset="utf-8">
         <title>Admin Panel</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +13,8 @@
         <link rel="stylesheet" href="{{ asset('assets/css/fonts/icomoon/icomoon.woff') }}">
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+       
+
 
     </head>
 <body style="background-image: url('{{ asset('assets/images/bg_1.jpg') }}');

@@ -41,6 +41,7 @@
                                 <th>Type</th>
                                 <th>Edit</th>
                                 <th>Delete</th>
+                                <th>Ingrediant</th>
                             </tr>
                         </thead>
                        <tbody>
@@ -84,13 +85,13 @@
                                     </button>
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.product.assignMaterials', $product->id) }}"
-                                    class="btn btn-primary btn-sm rounded-pill">
-                                        Assign Materials
-                                    </a>
+                                    <button
+                                        class="btn btn-primary btn-sm btnAssignRecipe"
+                                        data-product-id="{{ $product->id }}">
+                                        Assign Recipe
+                                    </button>
                                 </td>
-
-                            </tr>
+                          </tr>
                             @php $counter++; @endphp
                             @endforeach
                         </tbody>
@@ -103,11 +104,19 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('assets/js/assign-recipe.js') }}"></script>
+
 
 {{-- SweetAlert --}}
+<script src="{{ asset('assets/js/all-product.js') }}"></script>
+
+{{-- <script src="{{ asset('assets/js/assign-recipe.js') }}"></script> --}}
+
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-{{-- CSRF Setup for JS --}}
+{{-- CSRF Setup --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     $.ajaxSetup({
@@ -118,6 +127,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-{{-- External JS File --}}
-<script src="{{ asset('assets/js/all-product.js') }}"></script>
+
 @endsection

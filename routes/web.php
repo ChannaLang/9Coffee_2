@@ -20,6 +20,7 @@ use App\Http\Controllers\Admins\RawMaterialController;
 use App\Http\Controllers\Admins\ReportController;
 use App\Http\Controllers\Admins\StaffController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -85,45 +86,25 @@ Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
     Route::delete('/delete-admin/{id}', [AdminsController::class, 'deleteAdmin'])->name('delete.admin');
     Route::get('/help', [AdminsController::class, 'Help'])->name('admins.help');
 
+    // RawMaterial routes
+    Route::get('/raw-materials/list', [RawMaterialController::class, 'list'])
+        ->name('admin.raw-materials.list');
 
-
-    // Show all raw materials
-    Route::get('/admin/stock', [RawMaterialController::class, 'viewRawMaterials'])
-        ->name('admin.raw-material.stock');
-
-    // Update raw material quantity
-    Route::patch('/admin/stock/{id}', [RawMaterialController::class, 'updateRawMaterial'])
-        ->name('admin.raw-material.update');
-
-    // Show form to create a new raw material
-    Route::get('/admin/raw-material/create', [RawMaterialController::class, 'create'])
-        ->name('admin.raw-material.create');
-
-    // Store a new raw material
-    Route::post('/admin/raw-material/store', [RawMaterialController::class, 'store'])
+    Route::post('/raw-material/store', [RawMaterialController::class, 'store'])
         ->name('admin.raw-material.store');
 
-    Route::delete('/admin/raw-material/{id}', [App\Http\Controllers\Admins\RawMaterialController::class, 'destroy'])
-    ->name('admin.raw-material.destroy');
+    Route::delete('/raw-material/{id}', [RawMaterialController::class, 'destroy'])
+        ->name('admin.raw-material.destroy');
 
-    Route::post('/admin/product/{product}/materials', [ProductController::class, 'addMaterials'])
-     ->name('admin.product.addMaterials');
+    Route::patch('/raw-material/update/{id}', [RawMaterialController::class, 'updateRawMaterial'])
+        ->name('admin.raw-material.update');
 
+    Route::get('/stock', [RawMaterialController::class, 'viewRawMaterials'])
+        ->name('admin.raw-material.stock');
 
-    Route::get('/admin/product/{product}/assign-materials', [ProductController::class, 'assignMaterials'])
-        ->name('admin.product.assignMaterials');
-
-    Route::post('/admin/product/{product}/add-materials', [ProductController::class, 'addMaterials'])
+    // Product + Materials
+    Route::post('/product/{product}/add-materials', [ProductController::class, 'addMaterials'])
         ->name('admin.product.addMaterials');
-
-
-// Show assign materials form
-Route::get('/admin/product/{id}/assign-materials', [ProductController::class, 'assignMaterials'])
-    ->name('admin.product.assignMaterials');
-
-// Save assigned materials
-Route::post('/admin/product/{id}/add-materials', [ProductController::class, 'addMaterials'])
-    ->name('admin.product.addMaterials');
 
 
 
@@ -174,6 +155,6 @@ Route::post('/admin/product/{id}/add-materials', [ProductController::class, 'add
     Route::post('/staff-checkout', [StaffController::class, 'staffCheckout'])->name('staff.checkout');
     Route::get('/staff-checkout', [StaffController::class, 'staffCheckout'])->name('staff.checkout');
 
-    
+
 });
 

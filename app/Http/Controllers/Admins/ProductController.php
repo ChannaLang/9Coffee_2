@@ -6,73 +6,64 @@ use Illuminate\Http\Request;
 use App\Models\Product\Product;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Redirect;
+use App\Models\RawMaterial;
 
 class ProductController extends Controller
 {
-    public function index() {
-        $products = Product::all();
-        return view('admins.allproducts', compact('products'));
-    }
-   public function DisplayProducts(){
+    public function DisplayProducts(){
         $products = Product::select()->orderBy('id','asc')->get();
-
-
             return view('admins.allproducts',compact('products'));
 
+    }
 
-
-      }
-      public function CreateProducts(){
-
+    public function CreateProducts(){
             return view('admins.createproducts');
-
-      }
-
-      public function StoreProducts(Request $request)
-{
-    $request->validate([
-        'name' => 'required|unique:products,name|max:100',
-        'price' => 'required|numeric',
-        'type' => 'required',
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif',
-        'description' => 'nullable',
-    ]);
-
-    $descriptionPath = public_path('assets/images');
-
-            if (!file_exists($descriptionPath)) {
-        mkdir($descriptionPath, 0775, true);}
-    $myimage = time() . '_' . $request->image->getClientOriginalName();
-    $request->image->move($descriptionPath, $myimage);
-
-
-    Product::create([
-        'name' => $request->name,
-        'price' => $request->price,
-        'image' => $myimage,
-        'description' => $request->description,
-        'type' => $request->type,
-        'quantity' => $request->quantity ?? 0,
-    ]);
-
-    return Redirect::route('all.products')
-        ->with(['success' => "Product created successfully!"]);
-}
-
-  public function DeleteProducts($id)
-{
-    $product = Product::find($id);
-    if (!$product) {
-        return response()->json(['success' => false, 'message' => 'Product not found']);
     }
 
-    if (File::exists(public_path('assets/images/' . $product->image))) {
-        File::delete(public_path('assets/images/' . $product->image));
+    public function StoreProducts(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:products,name|max:100',
+            'price' => 'required|numeric',
+            'type' => 'required',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif',
+            'description' => 'nullable',
+        ]);
+
+        $descriptionPath = public_path('assets/images');
+
+                if (!file_exists($descriptionPath)) {
+            mkdir($descriptionPath, 0775, true);}
+        $myimage = time() . '_' . $request->image->getClientOriginalName();
+        $request->image->move($descriptionPath, $myimage);
+
+
+        Product::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'image' => $myimage,
+            'description' => $request->description,
+            'type' => $request->type,
+            'quantity' => $request->quantity ?? 0,
+        ]);
+
+        return Redirect::route('all.products')
+            ->with(['success' => "Product created successfully!"]);
     }
 
-    $product->delete();
+    public function DeleteProducts($id){
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Product not found']);
+        }
 
-    return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
+        if (File::exists(public_path('assets/images/' . $product->image))) {
+            File::delete(public_path('assets/images/' . $product->image));
+        }
+
+        $product->delete();
+
+        return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
 }
 
 
@@ -82,51 +73,51 @@ class ProductController extends Controller
         return view('admins.edit', compact('product'));
     }
 
-  public function AjaxUpdateProducts(Request $request, $id)
-{
-    $product = Product::find($id);
-    if (!$product) {
-        return response()->json(['success' => false, 'message' => 'Product not found']);
+        public function AjaxUpdateProducts(Request $request, $id){
+            $product = Product::find($id);
+            if (!$product) {
+                return response()->json(['success' => false, 'message' => 'Product not found']);
+            }
+
+            $request->validate([
+                'name' => 'required|max:100',
+                'price' => 'required|numeric',
+                'type' => 'required'
+            ]);
+
+            $product->name = $request->name;
+            $product->price = $request->price;
+            $product->type = $request->type;
+
+            $product->save();
+
+            return response()->json(['success' => true, 'message' => 'Product updated successfully']);
     }
+        public function addMaterials(Request $request, Product $product){
+            $data = $request->validate([
+                'materials' => 'required|array',
+                'materials.*' => 'numeric|min:0',
+            ]);
 
-    $request->validate([
-        'name' => 'required|max:100',
-        'price' => 'required|numeric',
-        'type' => 'required'
-    ]);
-
-    $product->name = $request->name;
-    $product->price = $request->price;
-    $product->type = $request->type;
-
-    $product->save();
-
-    return response()->json(['success' => true, 'message' => 'Product updated successfully']);
-}
-public function addMaterials(Request $request, Product $product)
-{
-    $data = $request->validate([
-        'materials' => 'required|array',
-        'materials.*' => 'numeric|min:0',
-    ]);
-
-    // Sync the pivot table
-    $syncData = [];
-    foreach ($data['materials'] as $rawId => $qty) {
-        if ($qty > 0) {
-            $syncData[$rawId] = ['quantity_required' => $qty];
+            $syncData = [];
+            foreach ($data['materials'] as $rawId => $qty) {
+                if ($qty > 0) {
+                    $syncData[$rawId] = ['quantity_required' => $qty];
+                }
         }
+            $product->rawMaterials()->sync($syncData);
+
+            // ✅ Return JSON for AJAX
+            return response()->json([
+                'message' => 'Recipe updated successfully!'
+            ]);
     }
 
-    $product->rawMaterials()->sync($syncData);
+    //     public function assignMaterials(Product $product){
+    //         $rawMaterials = \App\Models\RawMaterial::all(); // fetch all raw materials
+    //         return view('admins.assign_materials', compact('product', 'rawMaterials'));
+    // }
 
-    return redirect()->back()->with('success', 'Recipe updated successfully!');
-}
-public function assignMaterials(Product $product)
-{
-    $rawMaterials = \App\Models\RawMaterial::all(); // fetch all raw materials
-    return view('admins.assign_materials', compact('product', 'rawMaterials'));
-}
 
 
 }
